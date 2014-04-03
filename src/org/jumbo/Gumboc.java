@@ -17,7 +17,7 @@ public class Gumboc {
     String buffer = "<html><body>Merhaba !!!</body></html>";
     SizeT size = new SizeT((long)buffer.length());
     
-    GumboOutput ali = Gumbo.INSTANCE.gumbo_parse_with_options(options, buffer, size);
+    GumboOutput ali =(GumboOutput) Gumbo.INSTANCE.gumbo_parse_with_options(options, buffer, size);
     
     
   }
