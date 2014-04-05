@@ -12,6 +12,7 @@ import com.sun.jna.PointerType;
 import com.sun.jna.Structure;
 import com.sun.jna.Union;
 import com.sun.jna.ptr.PointerByReference;
+import com.sun.jna.win32.StdCallLibrary.StdCallCallback;
 
 public interface Gumbo extends Library  {
   Gumbo INSTANCE = (Gumbo) Native.loadLibrary("gumbo", Gumbo.class);
@@ -144,12 +145,12 @@ public interface Gumbo extends Library  {
      * The GumboTag enum for this element.<br>
      * C type : GumboTag
      */
-    public GumboTag tag;
+    public int tag;
     /**
      * The GumboNamespaceEnum for this element.<br>
      * C type : GumboNamespaceEnum
      */
-    public GumboNamespaceEnum tag_namespace;
+    public int tag_namespace;
     /**
      * A GumboStringPiece pointing to the original tag text for this element,<br>
      * pointing directly into the source buffer.  If the tag was inserted<br>
@@ -215,7 +216,7 @@ public interface Gumbo extends Library  {
      * GumboAttribute*<br>
      * C type : GumboVector
      */
-    public GumboElement(GumboVector children, GumboTag tag, GumboNamespaceEnum tag_namespace, GumboStringPiece original_tag, GumboStringPiece original_end_tag, GumboSourcePosition start_pos, GumboSourcePosition end_pos, GumboVector attributes) {
+    public GumboElement(GumboVector children, int tag, int tag_namespace, GumboStringPiece original_tag, GumboStringPiece original_end_tag, GumboSourcePosition start_pos, GumboSourcePosition end_pos, GumboVector attributes) {
       super();
       this.children = children;
       this.tag = tag;
@@ -625,7 +626,7 @@ public interface Gumbo extends Library  {
      * in the GumboTokenDocType template.<br>
      * C type : GumboQuirksModeEnum
      */
-    public GumboQuirksModeEnum doc_type_quirks_mode;
+    public int doc_type_quirks_mode;
     public GumboDocument() {
       super();
     }
@@ -647,7 +648,7 @@ public interface Gumbo extends Library  {
      * in the GumboTokenDocType template.<br>
      * C type : GumboQuirksModeEnum
      */
-    public GumboDocument(GumboVector children, byte has_doctype, Pointer name, Pointer public_identifier, Pointer system_identifier, GumboQuirksModeEnum doc_type_quirks_mode) {
+    public GumboDocument(GumboVector children, byte has_doctype, Pointer name, Pointer public_identifier, Pointer system_identifier, int doc_type_quirks_mode) {
       super();
       this.children = children;
       this.has_doctype = has_doctype;
@@ -793,7 +794,7 @@ public interface Gumbo extends Library  {
      * The type of node that this is.<br>
      * C type : GumboNodeType
      */
-    public GumboNodeType type;
+    public int type;
     /**
      * Pointer back to parent node.  Not owned.<br>
      * C type : GumboNode*
@@ -807,7 +808,7 @@ public interface Gumbo extends Library  {
      * situations.<br>
      * C type : GumboParseFlags
      */
-    public GumboParseFlags parse_flags;
+    public int parse_flags;
     /**
      * The actual node data.<br>
      * C type : VUnion
@@ -890,7 +891,7 @@ public interface Gumbo extends Library  {
      * @param v The actual node data.<br>
      * C type : VUnion
      */
-    public GumboNode(GumboNodeType type, GumboNode.ByReference parent, SizeT index_within_parent, GumboParseFlags parse_flags, VUnion v) {
+    public GumboNode(int type, GumboNode.ByReference parent, SizeT index_within_parent, int parse_flags, VUnion v) {
       super();
       this.type = type;
       this.parent = parent;
@@ -1012,39 +1013,21 @@ public interface Gumbo extends Library  {
     };
   };
   
-  /*
-  public static class GumboOutput extends Structure{
-    
-    public Pointer document;
-    
-    public Pointer root;
-    
-    public GumboVector errors;
-
-    protected List<? > getFieldOrder() {
-      return Arrays.asList("document", "root", "errors");
-    } 
-  }
-  */
-  public GumboOutput gumbo_parse_with_options(GumboOptions options, String buffer, SizeT size);
+//  public GumboOutput gumbo_parse_with_options(GumboOptions.ByReference options, String buffer, SizeT size);
   
-  public static class SizeT extends IntegerType {
-    private static final long serialVersionUID = -4958557824458643647L;
-    public SizeT() { this(0); }
-    public SizeT(long value) { super(Native.SIZE_T_SIZE, value); }
-  }
+  public GumboOutput gumbo_parse(String buffer);
   
-  public static class GumboOptions extends Structure {
+  public class GumboOptions extends Structure{
     /**
      * A memory allocator function.  Default: malloc.<br>
      * C type : GumboAllocatorFunction
      */
-    public Gumbo.GumboAllocatorFunction allocator;
+    public GumboAllocatorFunction allocator;
     /**
      * A memory deallocator function. Default: free.<br>
      * C type : GumboDeallocatorFunction
      */
-    public Gumbo.GumboDeallocatorFunction deallocator;
+    public GumboDeallocatorFunction deallocator;
     /**
      * An opaque object that's passed in as the first argument to all callbacks<br>
      * used by this library.  Default: NULL.<br>
@@ -1072,12 +1055,10 @@ public interface Gumbo extends Library  {
     public GumboOptions() {
       super();
     }
-    
     public GumboOptions(Pointer p){
       super(p);
       read();
     }
-    
     protected List<? > getFieldOrder() {
       return Arrays.asList("allocator", "deallocator", "userdata", "tab_stop", "stop_on_first_error", "max_errors");
     }
@@ -1099,7 +1080,7 @@ public interface Gumbo extends Library  {
      * to -1 to disable the limit.<br>
      * Default: -1
      */
-    public GumboOptions(Gumbo.GumboAllocatorFunction allocator, Gumbo.GumboDeallocatorFunction deallocator, Pointer userdata, int tab_stop, byte stop_on_first_error, int max_errors) {
+    public GumboOptions(GumboAllocatorFunction allocator, GumboDeallocatorFunction deallocator, Pointer userdata, int tab_stop, byte stop_on_first_error, int max_errors) {
       super();
       this.allocator = allocator;
       this.deallocator = deallocator;
@@ -1111,18 +1092,22 @@ public interface Gumbo extends Library  {
     protected ByReference newByReference() { return new ByReference(); }
     protected ByValue newByValue() { return new ByValue(); }
     protected GumboOptions newInstance() { return new GumboOptions(); }
+    
     public static class ByReference extends GumboOptions implements Structure.ByReference {
-      
+      public ByReference() { } 
+      public ByReference(Pointer p) { super(p); read(); } 
     };
     public static class ByValue extends GumboOptions implements Structure.ByValue {
-      
+      public ByValue() { } 
+      public ByValue(Pointer p) { super(p); read(); } 
     };
-  };
-  public interface GumboAllocatorFunction extends Callback {
-    Pointer apply(Pointer userdata, SizeT size);
-  };
-  public interface GumboDeallocatorFunction extends Callback {
-    void apply(Pointer userdata, Pointer ptr);
-  };
-  
+    
+    public static interface GumboAllocatorFunction extends StdCallCallback {
+      Pointer invoke(Pointer userdata, SizeT size);
+    };
+    
+    public static interface GumboDeallocatorFunction extends StdCallCallback {
+      void invoke(Pointer userdata, Pointer ptr);
+    };
+  }
 }

@@ -2,7 +2,6 @@ package org.jumbo;
 
 import org.jumbo.Gumbo.GumboOptions;
 import org.jumbo.Gumbo.GumboOutput;
-import org.jumbo.Gumbo.SizeT;
 
 import com.sun.jna.NativeLibrary;
 import com.sun.jna.Pointer;
@@ -17,8 +16,8 @@ public class Gumboc {
     String buffer = "<html><body>Merhaba !!!</body></html>";
     SizeT size = new SizeT((long)buffer.length());
     
-    GumboOutput ali =(GumboOutput) Gumbo.INSTANCE.gumbo_parse_with_options(options, buffer, size);
-    
+//    GumboOutput ali =  Gumbo.INSTANCE.gumbo_parse_with_options(options.newByReference(), buffer, size);
+  GumboOutput ali =  Gumbo.INSTANCE.gumbo_parse( buffer);
     
   }
   
