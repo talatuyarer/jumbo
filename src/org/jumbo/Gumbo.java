@@ -1,14 +1,13 @@
 package org.jumbo;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
-import com.sun.jna.Callback;
-import com.sun.jna.IntegerType;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
-import com.sun.jna.PointerType;
 import com.sun.jna.Structure;
 import com.sun.jna.Union;
 import com.sun.jna.ptr.PointerByReference;
@@ -38,6 +37,7 @@ public interface Gumbo extends Library  {
     public GumboSourcePosition start_pos;
     public GumboText() {
       super();
+      read();
     }
     protected List<? > getFieldOrder() {
       return Arrays.asList("text", "original_text", "start_pos");
@@ -58,6 +58,7 @@ public interface Gumbo extends Library  {
       this.text = text;
       this.original_text = original_text;
       this.start_pos = start_pos;
+      read();
     }
     protected ByReference newByReference() { return new ByReference(); }
     protected ByValue newByValue() { return new ByValue(); }
@@ -81,6 +82,7 @@ public interface Gumbo extends Library  {
     public SizeT length;
     public GumboStringPiece() {
       super();
+      read();
     }
     protected List<? > getFieldOrder() {
       return Arrays.asList("data", "length");
@@ -94,6 +96,7 @@ public interface Gumbo extends Library  {
       super();
       this.data = data;
       this.length = length;
+      read();
     }
     protected ByReference newByReference() { return new ByReference(); }
     protected ByValue newByValue() { return new ByValue(); }
@@ -112,6 +115,7 @@ public interface Gumbo extends Library  {
     public int offset;
     public GumboSourcePosition() {
       super();
+      read();
     }
     protected List<? > getFieldOrder() {
       return Arrays.asList("line", "column", "offset");
@@ -121,6 +125,7 @@ public interface Gumbo extends Library  {
       this.line = line;
       this.column = column;
       this.offset = offset;
+      read();
     }
     protected ByReference newByReference() { return new ByReference(); }
     protected ByValue newByValue() { return new ByValue(); }
@@ -185,6 +190,7 @@ public interface Gumbo extends Library  {
     public GumboVector attributes;
     public GumboElement() {
       super();
+      read();
     }
     protected List<? > getFieldOrder() {
       return Arrays.asList("children", "tag", "tag_namespace", "original_tag", "original_end_tag", "start_pos", "end_pos", "attributes");
@@ -226,6 +232,7 @@ public interface Gumbo extends Library  {
       this.start_pos = start_pos;
       this.end_pos = end_pos;
       this.attributes = attributes;
+      read();
     }
     protected ByReference newByReference() { return new ByReference(); }
     protected ByValue newByValue() { return new ByValue(); }
@@ -629,6 +636,7 @@ public interface Gumbo extends Library  {
     public int doc_type_quirks_mode;
     public GumboDocument() {
       super();
+      read();
     }
     protected List<? > getFieldOrder() {
       return Arrays.asList("children", "has_doctype", "name", "public_identifier", "system_identifier", "doc_type_quirks_mode");
@@ -656,6 +664,7 @@ public interface Gumbo extends Library  {
       this.public_identifier = public_identifier;
       this.system_identifier = system_identifier;
       this.doc_type_quirks_mode = doc_type_quirks_mode;
+      read();
     }
     protected ByReference newByReference() { return new ByReference(); }
     protected ByValue newByValue() { return new ByValue(); }
@@ -799,7 +808,8 @@ public interface Gumbo extends Library  {
      * Pointer back to parent node.  Not owned.<br>
      * C type : GumboNode*
      */
-    public GumboNode.ByReference parent;
+//    public GumboNode.ByReference parent;
+    public PointerByReference parent;
     /** The index within the parent's children vector of this node. */
     public SizeT index_within_parent;
     /**
@@ -833,6 +843,7 @@ public interface Gumbo extends Library  {
       public GumboText text;
       public VUnion() {
         super();
+        read();
       }
       /**
        * @param document For GUMBO_NODE_DOCUMENT.<br>
@@ -842,6 +853,7 @@ public interface Gumbo extends Library  {
         super();
         this.document = document;
         setType(GumboDocument.class);
+        read();
       }
       /**
        * @param text For everything else.<br>
@@ -851,6 +863,7 @@ public interface Gumbo extends Library  {
         super();
         this.text = text;
         setType(GumboText.class);
+        read();
       }
       /**
        * @param element For GUMBO_NODE_ELEMENT.<br>
@@ -860,6 +873,7 @@ public interface Gumbo extends Library  {
         super();
         this.element = element;
         setType(GumboElement.class);
+        read();
       }
       protected ByReference newByReference() { return new ByReference(); }
       protected ByValue newByValue() { return new ByValue(); }
@@ -874,6 +888,11 @@ public interface Gumbo extends Library  {
     };
     public GumboNode() {
       super();
+      read();
+    }
+    public GumboNode(Pointer p) {
+      super();
+      read();
     }
     protected List<? > getFieldOrder() {
       return Arrays.asList("type", "parent", "index_within_parent", "parse_flags", "v");
@@ -891,24 +910,39 @@ public interface Gumbo extends Library  {
      * @param v The actual node data.<br>
      * C type : VUnion
      */
-    public GumboNode(int type, GumboNode.ByReference parent, SizeT index_within_parent, int parse_flags, VUnion v) {
+    public GumboNode(int type, PointerByReference /*GumboNode.ByReference */parent, SizeT index_within_parent, int parse_flags, VUnion v) {
       super();
       this.type = type;
       this.parent = parent;
       this.index_within_parent = index_within_parent;
       this.parse_flags = parse_flags;
       this.v = v;
+      read();
     }
+    
     protected ByReference newByReference() { return new ByReference(); }
     protected ByValue newByValue() { return new ByValue(); }
     protected GumboNode newInstance() { return new GumboNode(); }
    
     public static class ByReference extends GumboNode implements Structure.ByReference {
-      
+      public ByReference() { } 
+      public ByReference(Pointer p) { super(p); read(); } 
     };
     public static class ByValue extends GumboNode implements Structure.ByValue {
       
     };
+    /*
+    public void read(){
+      super.read();
+      
+      for (Iterator i=super.getFieldList().iterator();i.hasNext();) {
+        Field structField = (Field)i.next();
+        String stname= structField.getName();
+        int a = 0;
+      }
+      v.read();
+    }
+    */
   }
   
   public class GumboVector extends Structure {
@@ -924,6 +958,7 @@ public interface Gumbo extends Library  {
     public int capacity;
     public GumboVector() {
       super();
+      read();
     }
     protected List<? > getFieldOrder() {
       return Arrays.asList("data", "length", "capacity");
@@ -940,6 +975,7 @@ public interface Gumbo extends Library  {
       this.data = data;
       this.length = length;
       this.capacity = capacity;
+      read();
     }
     protected ByReference newByReference() { return new ByReference(); }
     protected ByValue newByValue() { return new ByValue(); }
@@ -977,6 +1013,7 @@ public interface Gumbo extends Library  {
     public GumboVector errors;
     public GumboOutput() {
       super();
+      read();
     }
     protected List<? > getFieldOrder() {
       return Arrays.asList("document", "root", "errors");
@@ -1001,6 +1038,7 @@ public interface Gumbo extends Library  {
       this.document = document;
       this.root = root;
       this.errors = errors;
+      read();
     }
     protected ByReference newByReference() { return new ByReference(); }
     protected ByValue newByValue() { return new ByValue(); }
@@ -1013,9 +1051,12 @@ public interface Gumbo extends Library  {
     };
   };
   
-//  public GumboOutput gumbo_parse_with_options(GumboOptions.ByReference options, String buffer, SizeT size);
+  public GumboOutput gumbo_parse_with_options(Pointer options, String buffer, SizeT size);
   
-  public GumboOutput gumbo_parse(String buffer);
+  public GumboOutput.ByReference gumbo_parse(String buffer);
+  
+  public void gumbo_destroy_output(Pointer options, GumboOutput output);
+//  public  gumbo_destroy_output( const GumboOptions* options, GumboOutput* output);
   
   public class GumboOptions extends Structure{
     /**
@@ -1054,6 +1095,7 @@ public interface Gumbo extends Library  {
     public int max_errors;
     public GumboOptions() {
       super();
+      read();
     }
     public GumboOptions(Pointer p){
       super(p);
@@ -1088,6 +1130,7 @@ public interface Gumbo extends Library  {
       this.tab_stop = tab_stop;
       this.stop_on_first_error = stop_on_first_error;
       this.max_errors = max_errors;
+      read();
     }
     protected ByReference newByReference() { return new ByReference(); }
     protected ByValue newByValue() { return new ByValue(); }
