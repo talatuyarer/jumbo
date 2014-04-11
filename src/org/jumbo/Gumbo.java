@@ -1,20 +1,34 @@
 package org.jumbo;
 
-import java.lang.reflect.Field;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
+import com.sun.jna.Callback;
+import com.sun.jna.IntegerType;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import com.sun.jna.Union;
 import com.sun.jna.ptr.PointerByReference;
-import com.sun.jna.win32.StdCallLibrary.StdCallCallback;
 
 public interface Gumbo extends Library  {
   Gumbo INSTANCE = (Gumbo) Native.loadLibrary("gumbo", Gumbo.class);
+  
+  public GumboOutput gumbo_parse_with_options(Pointer options, String buffer, SizeT size);
+  
+  public GumboOutput.ByReference gumbo_parse(String buffer);
+  
+  public void gumbo_tag_from_original_text(GumboStringPiece text);
+  
+//  public  gumbo_destroy_output( const GumboOptions* options, GumboOutput* output);
+  public void gumbo_destroy_output(Pointer options, GumboOutput output);
+  
+//  const char* gumbo_normalize_svg_tagname(const GumboStringPiece* tagname);
+  public String gumbo_normalize_svg_tagname(GumboStringPiece tagname);
+  
+//  const char* gumbo_normalized_tagname(GumboTag tag);
+  public String gumbo_normalized_tagname(int tag); // GumboTag is Enum so its type is int
   
   public static class GumboText extends Structure{
     /**
@@ -77,7 +91,7 @@ public interface Gumbo extends Library  {
      * A pointer to the beginning of the string.  NULL iff length == 0.<br>
      * C type : const char*
      */
-    public Pointer data;
+    public String data;
     /** The length of the string fragment, in bytes.  May be zero. */
     public SizeT length;
     public GumboStringPiece() {
@@ -92,7 +106,7 @@ public interface Gumbo extends Library  {
      * C type : const char*<br>
      * @param length The length of the string fragment, in bytes.  May be zero.
      */
-    public GumboStringPiece(Pointer data, SizeT length) {
+    public GumboStringPiece(String data, SizeT length) {
       super();
       this.data = data;
       this.length = length;
@@ -107,6 +121,16 @@ public interface Gumbo extends Library  {
     public static class ByValue extends GumboStringPiece implements Structure.ByValue {
       
     };
+    
+    public GumboStringPiece clone(){
+      GumboStringPiece obj = new GumboStringPiece(data,new SizeT(data.length()));
+      return obj;
+    }
+    
+    public String toString(){
+      return data;
+    }
+    
   };
   
   public static class GumboSourcePosition extends Structure{
@@ -188,6 +212,23 @@ public interface Gumbo extends Library  {
      * C type : GumboVector
      */
     public GumboVector attributes;
+    /*
+    public Pointer Elements; 
+    public EE[] getElements() { 
+        Pointer[] array = Elements.getPointerArray(0); 
+        EE[] elements = new EE[array.length]; 
+        for (int i=0;i < elements.length;i++) { 
+            elements[i] = new EE(array[i]); 
+        } 
+        return elements; 
+    } 
+    
+    public GumboVector[] getAttributes(){
+      GumboVector[] array = attributes.getPointer();
+      
+      
+    }
+    */
     public GumboElement() {
       super();
       read();
@@ -234,6 +275,7 @@ public interface Gumbo extends Library  {
       this.attributes = attributes;
       read();
     }
+    
     protected ByReference newByReference() { return new ByReference(); }
     protected ByValue newByValue() { return new ByValue(); }
     protected GumboElement newInstance() { return new GumboElement(); }
@@ -243,7 +285,44 @@ public interface Gumbo extends Library  {
     public static class ByValue extends GumboElement implements Structure.ByValue {
       
     };
+
+    /*
+    @property
+    def tag_name(self):
+      original_tag = StringPiece.from_buffer_copy(self.original_tag)
+      _tag_from_original_text(ctypes.byref(original_tag))
+      
+      if self.tag_namespace == Namespace.SVG:
+        svg_tagname = _normalize_svg_tagname(ctypes.byref(original_tag))
+        if svg_tagname is not None:
+          return str(svg_tagname)
+      if self.tag == Tag.UNKNOWN:
+        if original_tag.data is None:
+          return ''
+        return str(original_tag).lower()
+      return _tagname(self.tag)
+    */
+    public String tagName(){
+      GumboStringPiece original_tag = this.original_tag.clone();
+      Gumbo.INSTANCE.gumbo_tag_from_original_text(original_tag);
+      
+      if(this.tag_namespace == Namespace.SVG.ordinal()){
+        String svg_tagname = Gumbo.INSTANCE.gumbo_normalize_svg_tagname(original_tag);
+        if(svg_tagname != null){
+          return svg_tagname;
+        }
+      }
+      if(this.tag == Tag.UNKNOWN.ordinal()){
+        if(original_tag.data == null){
+          return "";
+        }
+        return original_tag.toString().toLowerCase();
+      }
+      return Gumbo.INSTANCE.gumbo_normalized_tagname(this.tag);
+    }
   };
+  
+  
   /** enum values */
   public static interface GumboTag {
     /**
@@ -1051,13 +1130,6 @@ public interface Gumbo extends Library  {
     };
   };
   
-  public GumboOutput gumbo_parse_with_options(Pointer options, String buffer, SizeT size);
-  
-  public GumboOutput.ByReference gumbo_parse(String buffer);
-  
-  public void gumbo_destroy_output(Pointer options, GumboOutput output);
-//  public  gumbo_destroy_output( const GumboOptions* options, GumboOutput* output);
-  
   public class GumboOptions extends Structure{
     /**
      * A memory allocator function.  Default: malloc.<br>
@@ -1145,12 +1217,19 @@ public interface Gumbo extends Library  {
       public ByValue(Pointer p) { super(p); read(); } 
     };
     
-    public static interface GumboAllocatorFunction extends StdCallCallback {
-      Pointer invoke(Pointer userdata, SizeT size);
+    public static interface GumboAllocatorFunction extends Callback {
+      void invoke(Pointer userdata, SizeT size);
     };
     
-    public static interface GumboDeallocatorFunction extends StdCallCallback {
+    
+    public static interface GumboDeallocatorFunction extends Callback {
       void invoke(Pointer userdata, Pointer ptr);
     };
+    
+    public class SizeT extends IntegerType {
+      private static final long serialVersionUID = -4958557824458643647L;
+      public SizeT() { this(0L); }
+      public SizeT(long value) { super(Native.SIZE_T_SIZE, value); }
+    }
   }
 }
