@@ -17,11 +17,11 @@ public interface Gumbo extends Library  {
   
   public GumboOutput gumbo_parse_with_options(Pointer options, String buffer, SizeT size);
   
-  public GumboOutput.ByReference gumbo_parse(String buffer);
+  public GumboOutput gumbo_parse(String buffer);
   
   public void gumbo_tag_from_original_text(GumboStringPiece text);
   
-//  public  gumbo_destroy_output( const GumboOptions* options, GumboOutput* output);
+//  public  gumbo_destroy_output( const GumboOptions* options, GumboInternalOutput* output);
   public void gumbo_destroy_output(Pointer options, GumboOutput output);
   
 //  const char* gumbo_normalize_svg_tagname(const GumboStringPiece* tagname);
@@ -169,7 +169,7 @@ public interface Gumbo extends Library  {
      * GumboNode*<br>
      * C type : GumboVector
      */
-    public GumboVector children;
+    public Pointer children;
     /**
      * The GumboTag enum for this element.<br>
      * C type : GumboTag
@@ -212,6 +212,16 @@ public interface Gumbo extends Library  {
      * C type : GumboVector
      */
     public GumboVector attributes;
+    
+    
+    public GumboVector[] getChildrens(){
+      Pointer[] array = children.getPointerArray(0); 
+      GumboVector[] elements = new GumboVector[array.length]; 
+      for (int i=0;i < array.length;i++) { 
+          elements[i] = new GumboVector(array[i]); 
+      } 
+      return elements; 
+    }
     /*
     public Pointer Elements; 
     public EE[] getElements() { 
@@ -263,7 +273,7 @@ public interface Gumbo extends Library  {
      * GumboAttribute*<br>
      * C type : GumboVector
      */
-    public GumboElement(GumboVector children, int tag, int tag_namespace, GumboStringPiece original_tag, GumboStringPiece original_end_tag, GumboSourcePosition start_pos, GumboSourcePosition end_pos, GumboVector attributes) {
+    public GumboElement(Pointer children, int tag, int tag_namespace, GumboStringPiece original_tag, GumboStringPiece original_end_tag, GumboSourcePosition start_pos, GumboSourcePosition end_pos, GumboVector attributes) {
       super();
       this.children = children;
       this.tag = tag;
@@ -964,13 +974,18 @@ public interface Gumbo extends Library  {
       public static class ByValue extends VUnion implements Structure.ByValue {
         
       };
+      
+      public Pointer getElement(){
+        return getPointer().getPointer(4);
+      }
+      
     };
     public GumboNode() {
       super();
       read();
     }
     public GumboNode(Pointer p) {
-      super();
+      super(p);
       read();
     }
     protected List<? > getFieldOrder() {
@@ -998,6 +1013,11 @@ public interface Gumbo extends Library  {
       this.v = v;
       read();
     }
+    
+    public int getType(){
+      return getPointer().getInt(0);
+    }
+    
     
     protected ByReference newByReference() { return new ByReference(); }
     protected ByValue newByValue() { return new ByValue(); }
@@ -1039,6 +1059,10 @@ public interface Gumbo extends Library  {
       super();
       read();
     }
+    public GumboVector(Pointer p) {
+      super(p);
+      read();
+    }
     protected List<? > getFieldOrder() {
       return Arrays.asList("data", "length", "capacity");
     }
@@ -1073,13 +1097,13 @@ public interface Gumbo extends Library  {
      * that contains the entire document as its child.<br>
      * C type : GumboNode*
      */
-    public GumboNode document;
+    public GumboNode.ByReference document;
     /**
      * Pointer to the root node.  This the <html> tag that forms the root of the<br>
      * document.<br>
      * C type : GumboNode*
      */
-    public GumboNode root;
+    public GumboNode.ByReference root;
     /**
      * A list of errors that occurred during the parse.<br>
      * NOTE: In version 1.0 of this library, the API for errors hasn't been fully<br>
@@ -1094,6 +1118,12 @@ public interface Gumbo extends Library  {
       super();
       read();
     }
+    
+    public GumboNode getRoot(){
+      return new GumboNode(getPointer().getPointer(document.size()));
+    }
+    
+    
     protected List<? > getFieldOrder() {
       return Arrays.asList("document", "root", "errors");
     }
@@ -1112,7 +1142,7 @@ public interface Gumbo extends Library  {
      * GumboError<br>
      * C type : GumboVector
      */
-    public GumboOutput(GumboNode document, GumboNode root, GumboVector errors) {
+    public GumboOutput(GumboNode.ByReference document, GumboNode.ByReference root, GumboVector errors) {
       super();
       this.document = document;
       this.root = root;
